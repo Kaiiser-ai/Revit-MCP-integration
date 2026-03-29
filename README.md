@@ -152,15 +152,27 @@ Add the MCP server configuration:
 
 ## Safety & Ethical Considerations
 
-This system gives an AI the ability to **modify a live BIM production model**. Responsible use requires:
+This system gives an AI the ability to **modify a live BIM production model**. Responsible deployment requires careful attention to ethics, governance, and risk management.
 
-- **Human oversight** — The architect must initiate every interaction and verify proposed changes before they are applied to a shared model
-- **Thread safety** — The `IExternalEventHandler` pattern ensures all Revit API calls execute on the main thread, preventing data corruption
-- **Localhost only** — The HTTP server runs on `localhost:8765`, restricting access to the local machine
-- **Audit logging** — All AI-initiated model changes should be logged for traceability
-- **Workset isolation** — Recommended to execute AI-driven modifications in a dedicated workset or design option before merging into the central model
+### Risk Classification (EU AI Act)
 
-> ⚠️ **LLM hallucination is a real risk in this context.** The AI may misidentify elements or misinterpret ambiguous instructions. Never allow unsupervised AI modifications to safety-critical model elements (structural, fire egress, MEP systems).
+Under the EU AI Act risk-based framework, this system qualifies as **high-risk** because it directly impacts safety-critical building elements such as structural walls, fire egress components, and MEP systems. High-risk classification mandates formal risk management, technical documentation, transparency obligations, and human oversight throughout the system's lifecycle.
+
+### Hallucination Risk
+
+LLM hallucination — where the AI generates plausible but incorrect outputs — is the primary ethical concern. Unlike text-based assistants where a wrong answer stays on screen, a hallucination in this system translates into a **physical modification** to a shared production model. The AI may misidentify elements, fabricate parameter values, or misinterpret ambiguous instructions, potentially corrupting coordination workflows across disciplines.
+
+The risk is further amplified by **inconsistent BIM data**, where poor naming conventions or missing parameters increase the likelihood of misinterpretation by the AI system.
+
+### Mitigation Layers
+
+- **Technical safeguards** — `IExternalEventHandler` ensures thread-safe execution on Revit's main thread. The HTTP server runs on `localhost:8765` only. A confirmation step is enforced before destructive operations (delete, modify), presenting element ID, name, and category for architect approval.
+- **Governance & compliance** — All AI-initiated model changes should be logged with timestamps and element IDs for full auditability. A **DPIA (Data Protection Impact Assessment)** or **FRIA (Fundamental Rights Impact Assessment)** should be conducted prior to deployment to evaluate potential risks to safety and project stakeholders.
+- **Human oversight** — The architect must initiate every interaction and retains full override authority. The system is designed as an intelligent assistant, not an autonomous agent. All AI-driven modifications should be isolated in a dedicated Revit workset or design option before merging into the shared central model.
+- **Transparency & accountability** — Users must be informed that AI is generating model modifications. The responsible professional (architect/BIM manager) remains accountable for all changes applied to the production model, regardless of whether they were AI-assisted.
+- **Data privacy** — BIM models contain proprietary project data including design intent, client information, and commercial specifications. The localhost-only architecture ensures no model data leaves the local machine. No data is sent to external APIs.
+
+> ⚠️ **In safety-critical AECO environments, AI must remain a controlled tool under professional supervision — never an autonomous decision-maker.**
 
 ## Project Structure
 
